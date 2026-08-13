@@ -50,12 +50,16 @@ def resolve_conflict(state: dict) -> dict:
         # Fastembed BGE small typically returns scores between 0.7 and 1.0 for related texts
         confidence_threshold = 0.85
         
-        if highest_score >= confidence_threshold:
+        best_precedent = max(precedents, key=lambda precedent: precedent["score"], default=None)
+        if (
+            best_precedent
+            and highest_score >= confidence_threshold
+            and best_precedent["metadata"].get("decision") == "proceed"
+        ):
             print(f"[Conflict Resolver] High confidence precedent found (Score: {highest_score:.2f}). Applying automated resolution.")
-            # In a real system, we'd apply the metadata action here
             state["final_decision"] = "proceed_based_on_precedent"
         else:
-            print(f"[Conflict Resolver] Low confidence (Score: {highest_score:.2f} < {confidence_threshold}). Escalating to human.")
+            print(f"[Conflict Resolver] Low confidence or non-proceed decision (Score: {highest_score:.2f}). Escalating to human.")
             state["final_decision"] = "escalate"
 
     except Exception as e:

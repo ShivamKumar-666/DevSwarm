@@ -1,8 +1,9 @@
 from qdrant_client import QdrantClient
 
-def seed():
+def seed(reset=False):
     print("Connecting to Qdrant...")
     client = QdrantClient(url="http://localhost:6333")
+    client.set_model("BAAI/bge-small-en-v1.5")
 
     collections = [
         "past_deployments",
@@ -15,17 +16,21 @@ def seed():
 
     for col in collections:
         if col in existing_collections:
-            print(f"Collection '{col}' already exists. Recreating...")
-            client.delete_collection(col)
-
-        print(f"Setting up collection '{col}' for fastembed...")
-        client.set_model("BAAI/bge-small-en-v1.5")
-        
-        # fastembed native integration allows us to just add docs
-        client.create_collection(
-            collection_name=col,
-            vectors_config=client.get_fastembed_vector_params()
-        )
+            if reset:
+                print(f"Collection '{col}' exists. Reset is True. Recreating...")
+                client.delete_collection(col)
+                client.create_collection(
+                    collection_name=col,
+                    vectors_config=client.get_fastembed_vector_params()
+                )
+            else:
+                print(f"Collection '{col}' already exists. Skipping creation...")
+        else:
+            print(f"Setting up collection '{col}' for fastembed...")
+            client.create_collection(
+                collection_name=col,
+                vectors_config=client.get_fastembed_vector_params()
+            )
 
     # 1. Past Deployments
     print("Seeding past_deployments...")
@@ -40,7 +45,8 @@ def seed():
             {"status": "failed", "reason": "missing secrets"},
             {"status": "success", "reason": "high test coverage"},
             {"status": "blocked", "reason": "branch protection"}
-        ]
+        ],
+        ids=[1, 2, 3]
     )
 
     # 2. Past Security Scans
@@ -56,7 +62,8 @@ def seed():
             {"decision": "escalate", "severity": "critical", "cve": "CVE-2023-111"},
             {"decision": "proceed", "severity": "medium", "cve": "CVE-2023-222"},
             {"decision": "proceed", "severity": "none"}
-        ]
+        ],
+        ids=[1, 2, 3]
     )
 
     # 3. Past Incidents
@@ -72,7 +79,8 @@ def seed():
             {"action": "rollback", "trigger": "memory"},
             {"action": "ignore", "trigger": "cpu_spike"},
             {"action": "restart", "trigger": "db_timeout"}
-        ]
+        ],
+        ids=[1, 2, 3]
     )
 
     # 4. Cost History
@@ -88,7 +96,8 @@ def seed():
             {"action": "alert", "trend": "up"},
             {"action": "monitor", "trend": "down"},
             {"action": "monitor", "trend": "stable"}
-        ]
+        ],
+        ids=[1, 2, 3]
     )
 
 if __name__ == "__main__":
