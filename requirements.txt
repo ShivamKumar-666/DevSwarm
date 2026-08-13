@@ -18,3 +18,9 @@ torch==2.2.1
 
 # Environment config
 python-dotenv==1.0.1
+
+# MCP & Agent Integrations
+mcp==1.0.0
+docker==7.0.0
+kubernetes==29.0.0
+PyGithub==2.2.0
