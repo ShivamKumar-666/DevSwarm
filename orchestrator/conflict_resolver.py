@@ -1,5 +1,10 @@
-from qdrant_client import QdrantClient
 import json
+
+try:
+    from qdrant_client import QdrantClient
+except Exception as e:
+    QdrantClient = None
+    print(f"Warning: qdrant_client could not be imported: {e}")
 
 def resolve_conflict(state: dict) -> dict:
     """
@@ -13,20 +18,46 @@ def resolve_conflict(state: dict) -> dict:
     print("[Conflict Resolver] Conflict detected. Querying Qdrant for precedents...")
     
     try:
+        if QdrantClient is None:
+            raise Exception("QdrantClient not available")
+        
         client = QdrantClient(url="http://localhost:6333")
         client.set_model("BAAI/bge-small-en-v1.5")
         
         # Build a query string representing the current conflict
         # For MVP, we just take all agent outputs and stringify them
-        query_text = "Conflict context: " + json.dumps(state.get("agent_outputs", {}))
+        agent_outputs = state.get("agent_outputs", {})
+        vote_summary = []
+        for agent, data in sorted(agent_outputs.items()):
+            vote_summary.append(f"{agent.capitalize()}: {data.get('vote', 'unknown')}")
+        query_text = "Conflict context: " + ", ".join(vote_summary)
         
-        # We search across all collections, or a specific one depending on the context.
-        # For simplicity, we just search 'past_security_scans' as an example if it's a security conflict.
-        # A more robust system would route the query to the correct collection.
-        # We'll just search 'past_security_scans' for the MVP demo.
+        # Determine which collection to search based on who voted to block/rollback
+        collection_map = {
+            "security": "past_security_scans",
+            "cost": "cost_history",
+            "incident": "past_incidents"
+        }
+        
+        # Default fallback
+        target_collection = "past_security_scans"
+        
+        for agent, agent_data in agent_outputs.items():
+            vote = agent_data.get("vote", "")
+            if vote in ("block", "rollback") and agent in collection_map:
+                target_collection = collection_map[agent]
+                # Keep looping to let the LAST agent (incident) take precedence, or we can just break.
+                # Since incident is usually the most critical, let's just break for simplicity, but wait!
+                # Actually, dicts preserve insertion order. Deploy -> Security -> Monitor -> Cost -> Incident.
+                # So if security blocked, it breaks immediately. Let's NOT break, so it overwrites and prioritizes the later stages like cost/incident.
+                
+        print(f"[Conflict Resolver] Routing Qdrant query to collection: {target_collection}")
+        
+        # Save the target collection into state so the backend can write precedents back to the right place
+        state["conflict_collection"] = target_collection
         
         search_result = client.query(
-            collection_name="past_security_scans",
+            collection_name=target_collection,
             query_text=query_text,
             limit=3
         )
@@ -46,20 +77,15 @@ def resolve_conflict(state: dict) -> dict:
         state["rag_context"] = precedents
         
         # Escalation Logic based on Confidence Score
-        # (Assuming cosine similarity / fastembed score, where 1.0 is exact match)
-        # Fastembed BGE small typically returns scores between 0.7 and 1.0 for related texts
-        confidence_threshold = 0.85
+        confidence_threshold = 0.80
         
         best_precedent = max(precedents, key=lambda precedent: precedent["score"], default=None)
-        if (
-            best_precedent
-            and highest_score >= confidence_threshold
-            and best_precedent["metadata"].get("decision") == "proceed"
-        ):
-            print(f"[Conflict Resolver] High confidence precedent found (Score: {highest_score:.2f}). Applying automated resolution.")
-            state["final_decision"] = "proceed_based_on_precedent"
+        if best_precedent and highest_score >= confidence_threshold:
+            decision = best_precedent["metadata"].get("decision", "escalate")
+            print(f"[Conflict Resolver] High confidence precedent found (Score: {highest_score:.2f}). Applying automated resolution: {decision}")
+            state["final_decision"] = decision
         else:
-            print(f"[Conflict Resolver] Low confidence or non-proceed decision (Score: {highest_score:.2f}). Escalating to human.")
+            print(f"[Conflict Resolver] Low confidence (Score: {highest_score:.2f}). Escalating to human.")
             state["final_decision"] = "escalate"
 
     except Exception as e:

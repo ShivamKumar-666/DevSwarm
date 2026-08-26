@@ -9,7 +9,7 @@ uvicorn==0.27.1
 pydantic>=2.8.0
 
 # Storage & DB
-qdrant-client>=1.10.0
+qdrant-client[fastembed]>=1.10.0
 redis==5.0.3
 
 # Embeddings (Local HF via sentence-transformers)
@@ -20,8 +20,11 @@ redis==5.0.3
 python-dotenv==1.0.1
 
 # MCP & Agent Integrations
-mcp==1.0.0
+mcp>=1.2.0
 docker==7.0.0
 kubernetes==29.0.0
 PyGithub==2.2.0
-fastembed>=0.8.0
+groq
+
+fastapi
+uvicorn[standard]

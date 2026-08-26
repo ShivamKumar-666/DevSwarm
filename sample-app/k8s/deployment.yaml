@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devswarm-demo
+  labels:
+    app: devswarm-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: devswarm-demo
+  template:
+    metadata:
+      labels:
+        app: devswarm-demo
+    spec:
+      containers:
+      - name: web
+        image: devswarm-app:latest
+        imagePullPolicy: Never # Force pulling from local kind registry
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        volumeMounts:
+          - mountPath: /tmp
+            name: tmp-volume
+        ports:
+        - containerPort: 8080
+      volumes:
+        - name: tmp-volume
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: devswarm-demo-svc
+spec:
+  type: NodePort
+  selector:
+    app: devswarm-demo
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080

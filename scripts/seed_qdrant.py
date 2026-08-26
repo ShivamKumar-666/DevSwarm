@@ -90,16 +90,28 @@ def seed(reset=False):
         documents=[
             "Kubernetes cluster cost increased by 200% due to unoptimized queries.",
             "Cost reduced by 30% after resizing node pools.",
-            "Standard operational cost maintained within budget."
+            "Standard operational cost maintained within budget.",
+            'Conflict context: Cost: block, Deploy: proceed, Incident: rollback, Monitor: block, Security: proceed'
         ],
         metadata=[
             {"action": "alert", "trend": "up"},
             {"action": "monitor", "trend": "down"},
-            {"action": "monitor", "trend": "stable"}
+            {"action": "monitor", "trend": "stable"},
+            {"decision": "rollback", "human_override": True, "note": "Auto-resolution seed"}
         ],
-        ids=[1, 2, 3]
+        ids=[1, 2, 3, 4]
+    )
+
+    # 5. Exact Match for Auto-Resolution Scenario B
+    client.add(
+        collection_name="past_incidents",
+        documents=['Conflict context: Cost: block, Deploy: proceed, Incident: rollback, Monitor: block, Security: proceed'],
+        metadata=[{"decision": "rollback", "human_override": True, "note": "Auto-resolution seed"}],
+        ids=[4]
     )
 
 if __name__ == "__main__":
-    seed()
+    import sys
+    reset = "--reset" in sys.argv
+    seed(reset=reset)
     print("Seeding complete!")
