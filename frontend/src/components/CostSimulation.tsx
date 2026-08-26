@@ -3,7 +3,7 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 export default function CostSimulation({ state }: { state: any }) {
-  if (!state || !state.agent_outputs || !state.agent_outputs.CostAgent) {
+  if (!state || !state.agent_outputs || !state.agent_outputs.cost) {
     return (
       <div style={{ color: "var(--text-muted)", fontSize: "13px", padding: "var(--spacing-4)", border: "1px dashed var(--status-simulated)", borderRadius: "8px" }}>
         No cost simulation data available yet.
@@ -11,8 +11,9 @@ export default function CostSimulation({ state }: { state: any }) {
     );
   }
 
-  const costData = state.agent_outputs.CostAgent;
-  const breakdown = costData.breakdown || { "cpu_cost": 60.0, "memory_cost": 20.0 };
+  const costData = state.agent_outputs.cost;
+  const costResult = costData.cost_result || {};
+  const breakdown = costResult.breakdown || { "cpu_cost": 60.0, "memory_cost": 20.0 };
   
   const chartData = Object.entries(breakdown).map(([key, value]) => ({
     name: key.replace("_cost", "").toUpperCase(),
@@ -32,7 +33,7 @@ export default function CostSimulation({ state }: { state: any }) {
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginBottom: "4px" }}>Total Estimated Cost</div>
           <div className="mono" style={{ fontSize: "28px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "var(--spacing-2)" }}>
-            ${costData.monthly_cost_usd?.toFixed(2) || "80.00"}
+            ${costResult.monthly_cost_usd?.toFixed(2) || "80.00"}
           </div>
           <div style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
             {costData.reason}

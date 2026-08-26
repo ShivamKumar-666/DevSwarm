@@ -61,7 +61,10 @@ pip install -r requirements.txt
 python scripts/seed_qdrant.py --reset
 
 # Start the FastAPI Server
+# On Linux/macOS:
 export GROQ_API_KEY="your-groq-api-key"
+# On Windows (PowerShell):
+# $env:GROQ_API_KEY="your-groq-api-key"
 uvicorn backend.api:app --host 0.0.0.0 --port 8000
 ```
 

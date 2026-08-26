@@ -27,7 +27,10 @@ def resolve_conflict(state: dict) -> dict:
         # Build a query string representing the current conflict
         # For MVP, we just take all agent outputs and stringify them
         agent_outputs = state.get("agent_outputs", {})
-        query_text = "Conflict context: " + json.dumps(agent_outputs)
+        vote_summary = []
+        for agent, data in sorted(agent_outputs.items()):
+            vote_summary.append(f"{agent.capitalize()}: {data.get('vote', 'unknown')}")
+        query_text = "Conflict context: " + ", ".join(vote_summary)
         
         # Determine which collection to search based on who voted to block/rollback
         collection_map = {

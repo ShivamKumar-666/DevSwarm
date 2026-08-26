@@ -75,10 +75,15 @@ export default function DecisionTrail({ state }: { state: any }) {
               </span>
             </div>
           </div>
-        ) : (
+        ) : finalDecision ? (
            <div style={{ display: "flex", alignItems: "center", gap: "var(--spacing-3)", padding: "var(--spacing-4)", backgroundColor: "var(--bg-surface)", borderRadius: "8px", border: "1px solid var(--border)" }}>
              <Info size={16} color="var(--status-healthy)" />
              <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>Unanimous decision. No conflict resolution required. Action: <strong>PROCEED</strong></span>
+           </div>
+        ) : (
+           <div style={{ display: "flex", alignItems: "center", gap: "var(--spacing-3)", padding: "var(--spacing-4)", backgroundColor: "var(--bg-surface)", borderRadius: "8px", border: "1px solid var(--border)" }}>
+             <Info size={16} color="var(--text-secondary)" />
+             <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>Waiting for all agents to cast their votes...</span>
            </div>
         )}
       </div>

@@ -91,7 +91,7 @@ def seed(reset=False):
             "Kubernetes cluster cost increased by 200% due to unoptimized queries.",
             "Cost reduced by 30% after resizing node pools.",
             "Standard operational cost maintained within budget.",
-            'Conflict context: {"deploy": "proceed", "security": "proceed", "monitor": "block", "cost": "block", "incident": "rollback"}'
+            'Conflict context: Cost: block, Deploy: proceed, Incident: rollback, Monitor: block, Security: proceed'
         ],
         metadata=[
             {"action": "alert", "trend": "up"},
@@ -105,7 +105,7 @@ def seed(reset=False):
     # 5. Exact Match for Auto-Resolution Scenario B
     client.add(
         collection_name="past_incidents",
-        documents=['Conflict context: {"deploy": "proceed", "security": "proceed", "monitor": "block", "cost": "block", "incident": "rollback"}'],
+        documents=['Conflict context: Cost: block, Deploy: proceed, Incident: rollback, Monitor: block, Security: proceed'],
         metadata=[{"decision": "rollback", "human_override": True, "note": "Auto-resolution seed"}],
         ids=[4]
     )

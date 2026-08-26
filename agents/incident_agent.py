@@ -7,7 +7,8 @@ def incident_node(state: dict):
     
     # 1. Run tool
     # Check memory metrics
-    metrics_str = query_metrics("pod_mem_usage", target="test-app")
+    target_app = state.get("deployment_name", "test-app")
+    metrics_str = query_metrics("pod_mem_usage", target=target_app)
     print(f"[Incident Agent] Memory Metrics: {metrics_str}")
     
     # 2. Get LLM Vote

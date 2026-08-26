@@ -39,8 +39,12 @@ Context Data:
             content = content[:-3]
             
         result = json.loads(content.strip())
+        vote = result.get("vote", "block").lower()
+        if vote not in ["proceed", "block", "rollback", "monitor"]:
+            vote = "block"
+            
         return {
-            "vote": result.get("vote", "block").lower(),
+            "vote": vote,
             "reason": result.get("reason", "No reason provided")
         }
     except Exception as e:

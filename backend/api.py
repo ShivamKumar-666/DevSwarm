@@ -1,4 +1,4 @@
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import sys
@@ -44,7 +44,8 @@ except Exception as e:
     redis_client = None
 
 def get_run(run_id):
-    if not redis_client: return None
+    if not redis_client:
+        return None
     data = redis_client.json().get(f"run:{run_id}")
     return data if data else None
 
@@ -64,6 +65,8 @@ class ApprovalRequest(BaseModel):
 
 @app.post("/api/swarm/run")
 def start_run(req: RunRequest, background_tasks: BackgroundTasks):
+    if not redis_client:
+        raise HTTPException(status_code=503, detail="Redis persistence is unavailable.")
     run_id = str(uuid.uuid4())
     run_data = {
         "status": "running",

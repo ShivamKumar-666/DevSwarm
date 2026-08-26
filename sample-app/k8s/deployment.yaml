@@ -18,8 +18,21 @@ spec:
       - name: web
         image: devswarm-app:latest
         imagePullPolicy: Never # Force pulling from local kind registry
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        volumeMounts:
+          - mountPath: /tmp
+            name: tmp-volume
         ports:
-        - containerPort: 80
+        - containerPort: 8080
+      volumes:
+        - name: tmp-volume
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -30,6 +43,6 @@ spec:
   selector:
     app: devswarm-demo
   ports:
-    - port: 80
-      targetPort: 80
+    - port: 8080
+      targetPort: 8080
       nodePort: 30080

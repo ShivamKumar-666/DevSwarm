@@ -15,18 +15,23 @@ export default function Dashboard() {
   const [imageTag, setImageTag] = useState("nginx:1.14.2");
 
   const startRun = async () => {
-    const res = await fetch("http://localhost:8000/api/swarm/run", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image_tag: imageTag, deployment_name: "test-app" })
-    });
-    const data = await res.json();
-    setRunId(data.run_id);
+    setRunStatus({ status: "running", logs: ["[System] Request initiated..."] });
+    try {
+      const res = await fetch("/api/swarm/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_tag: imageTag, deployment_name: "test-app" })
+      });
+      const data = await res.json();
+      setRunId(data.run_id);
+    } catch (e) {
+      setRunStatus({ status: "failed", logs: ["[Error] Network request failed."] });
+    }
   };
 
   const handleApprove = async (id: string, decision: string) => {
     try {
-      const res = await fetch("http://localhost:8000/api/swarm/approve", {
+      const res = await fetch("/api/swarm/approve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ run_id: id, decision })
@@ -34,22 +39,26 @@ export default function Dashboard() {
       const data = await res.json();
       if (data.status === "error") {
         alert(`Approval failed: ${data.message}`);
+        return false;
       }
+      return true;
     } catch (e) {
       alert("Could not reach backend. Is the server running?");
+      return false;
+    } finally {
+      fetchData(); // Immediately refresh
     }
-    fetchData(); // Immediately refresh
   };
 
   const fetchData = async () => {
     if (runId) {
-      const statusRes = await fetch(`http://localhost:8000/api/swarm/status/${runId}`);
+      const statusRes = await fetch(`/api/swarm/status/${runId}`);
       if (statusRes.ok) {
         const statusData = await statusRes.json();
         setRunStatus(statusData);
       }
     }
-    const queueRes = await fetch(`http://localhost:8000/api/swarm/queue`);
+    const queueRes = await fetch(`/api/swarm/queue`);
     if (queueRes.ok) {
       const queueData = await queueRes.json();
       setQueue(queueData.queue);

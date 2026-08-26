@@ -3,19 +3,21 @@
 import { useState } from "react";
 import { Check, X, ShieldAlert, CheckCircle2 } from "lucide-react";
 
-export default function ApprovalQueue({ queue, onApprove }: { queue: any[], onApprove: (id: string, decision: string) => void }) {
+export default function ApprovalQueue({ queue, onApprove }: { queue: any[], onApprove: (id: string, decision: string) => Promise<boolean> | void }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [decisions, setDecisions] = useState<Record<string, { decision: string; timestamp: string }>>({});
 
   const handleAction = async (id: string, decision: string) => {
     setLoadingId(id);
     try {
-      await onApprove(id, decision);
-      // Record the decision locally so we can show confirmation even after it leaves the queue
-      setDecisions(prev => ({
-        ...prev,
-        [id]: { decision, timestamp: new Date().toLocaleTimeString() }
-      }));
+      const success = await onApprove(id, decision);
+      if (success !== false) {
+        // Record the decision locally so we can show confirmation even after it leaves the queue
+        setDecisions(prev => ({
+          ...prev,
+          [id]: { decision, timestamp: new Date().toLocaleTimeString() }
+        }));
+      }
     } finally {
       setLoadingId(null);
     }

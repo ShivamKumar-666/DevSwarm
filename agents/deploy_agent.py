@@ -15,12 +15,22 @@ def deploy_node(state: dict):
     # 3. Check status
     status_result = check_rollout_status(deployment_name="test-app-deployment")
     
+    # Determine vote and reason based on actual results
+    vote = "proceed"
+    reason = "Deployed successfully"
+    if "Error" in build_result or "Error" in deploy_result or "Error" in status_result:
+        vote = "block"
+        reason = "Deployment failed due to errors."
+    elif "Rollout in progress" in status_result:
+        vote = "monitor"
+        reason = "Deployment applied but rollout is still in progress."
+
     state.setdefault("agent_outputs", {})["deploy"] = {
-        "status": "success", 
+        "status": "success" if vote == "proceed" else "error", 
         "build_result": build_result,
         "deploy_result": deploy_result,
         "status_result": status_result,
-        "vote": "proceed", # Default for now
-        "reason": "Deployed successfully"
+        "vote": vote,
+        "reason": reason
     }
     return state

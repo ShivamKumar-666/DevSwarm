@@ -13,11 +13,19 @@ if (!(Test-Path -Path $BIN_DIR)) {
 if (!(Test-Path -Path $KIND_EXE)) {
     Write-Host " Downloading kind.exe..." -ForegroundColor Cyan
     Invoke-WebRequest -Uri "https://kind.sigs.k8s.io/dl/v0.20.0/kind-windows-amd64" -OutFile $KIND_EXE
+    Invoke-WebRequest -Uri "https://kind.sigs.k8s.io/dl/v0.20.0/kind-windows-amd64.sha256sum" -OutFile "$KIND_EXE.sha256sum"
+    $expectedHash = (Get-Content "$KIND_EXE.sha256sum").Split(" ")[0]
+    $actualHash = (Get-FileHash $KIND_EXE -Algorithm SHA256).Hash
+    if ($expectedHash.ToLower() -ne $actualHash.ToLower()) { throw "Checksum mismatch for kind.exe" }
 }
 
 if (!(Test-Path -Path $KUBECTL_EXE)) {
     Write-Host " Downloading kubectl.exe..." -ForegroundColor Cyan
     Invoke-WebRequest -Uri "https://dl.k8s.io/release/v1.28.0/bin/windows/amd64/kubectl.exe" -OutFile $KUBECTL_EXE
+    Invoke-WebRequest -Uri "https://dl.k8s.io/release/v1.28.0/bin/windows/amd64/kubectl.exe.sha256" -OutFile "$KUBECTL_EXE.sha256"
+    $expectedHash = (Get-Content "$KUBECTL_EXE.sha256").Trim()
+    $actualHash = (Get-FileHash $KUBECTL_EXE -Algorithm SHA256).Hash
+    if ($expectedHash.ToLower() -ne $actualHash.ToLower()) { throw "Checksum mismatch for kubectl.exe" }
 }
 
 Write-Host " STARTING CI/CD PIPELINE" -ForegroundColor Green
@@ -34,7 +42,7 @@ if ($LASTEXITCODE -ne 0) {
 # 3. Trigger DevSwarm Verification
 Write-Host "`n Triggering DevSwarm AI Evaluation..." -ForegroundColor Cyan
 $runPayload = @{
-    image_tag = "nginx:1.14.2"
+    image_tag = $IMAGE_NAME
     deployment_name = "devswarm-demo"
 } | ConvertTo-Json
 
@@ -87,7 +95,7 @@ Write-Host "Loading Docker image into Kind..."
 & $KIND_EXE load docker-image $IMAGE_NAME --name devswarm
 
 Write-Host "Applying Kubernetes manifests..."
-& $KUBECTL_EXE apply -f ./sample-app/k8s/deployment.yaml
+& $KUBECTL_EXE --context kind-devswarm apply -f ./sample-app/k8s/deployment.yaml
 
 Write-Host "`n PIPELINE SUCCESSFUL!" -ForegroundColor Green
 Write-Host "Your app is now running securely in Kubernetes." -ForegroundColor Green
