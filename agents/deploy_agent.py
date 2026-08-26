@@ -19,6 +19,8 @@ def deploy_node(state: dict):
         "status": "success", 
         "build_result": build_result,
         "deploy_result": deploy_result,
-        "status_result": status_result
+        "status_result": status_result,
+        "vote": "proceed", # Default for now
+        "reason": "Deployed successfully"
     }
     return state

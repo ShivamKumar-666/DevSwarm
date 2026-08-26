@@ -1,5 +1,3 @@
-
-
 services:
   # RAG Vector Database
   qdrant:
@@ -35,7 +33,7 @@ services:
 
   # Orchestrator (Stubbed for now, will run locally during dev)
   orchestrator:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     ports:
