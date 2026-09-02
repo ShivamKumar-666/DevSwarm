@@ -11,25 +11,13 @@ services:
 
   # Event Bus
   redis:
-    image: redis:7.2-alpine
+    image: redis/redis-stack-server:latest
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
 
-  # Standard Log Storage / State Storage
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: devswarm
-      POSTGRES_PASSWORD: devswarmpassword
-      POSTGRES_DB: devswarm
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
 
   # Orchestrator (Stubbed for now, will run locally during dev)
   orchestrator:
@@ -41,15 +29,12 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379
       - QDRANT_URL=http://qdrant:6333
-      - DATABASE_URL=postgresql://devswarm:devswarmpassword@postgres:5432/devswarm
     depends_on:
       - qdrant
       - redis
-      - postgres
     profiles:
       - full # Use `docker-compose --profile full up` to run the orchestrator in docker
 
 volumes:
   qdrant_data:
   redis_data:
-  postgres_data:

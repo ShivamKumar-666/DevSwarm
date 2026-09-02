@@ -185,9 +185,19 @@ def approve_action(req: ApprovalRequest):
         client = QdrantClient(url="http://localhost:6333")
         client.set_model("BAAI/bge-small-en-v1.5")
         import uuid as uid
+        
+        # Build rich precedent context
+        image_tag = r_data.get("state", {}).get("image_tag", "unknown")
+        agent_outputs = r_data.get("state", {}).get("agent_outputs", {})
+        context_str = f"Image {image_tag} was flagged. "
+        for agent, output in agent_outputs.items():
+            if isinstance(output, dict) and "vote" in output:
+                context_str += f"{agent} voted {output['vote']} because: {output.get('reason', 'no reason')}. "
+        precedent_doc = f"{context_str}Human manually chose to {req.decision}."
+        
         client.add(
             collection_name=conflict_collection,
-            documents=[f"Human manually chose to {req.decision} a flagged event."],
+            documents=[precedent_doc],
             metadata=[{"decision": req.decision, "human_override": True}],
             ids=[uid.uuid4().int & (1<<64)-1]
         )

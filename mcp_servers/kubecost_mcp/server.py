@@ -25,6 +25,7 @@ def estimate_cost(deployment_name: str, cpu_cores: int = 1, memory_gb: int = 1) 
         "status": "success",
         "deployment": deployment_name,
         "monthly_cost_usd": total_cost,
+        "data_provenance": "simulated_pricing_for_demo",
         "breakdown": {
             "cpu_cost": cpu_cost,
             "memory_cost": mem_cost
